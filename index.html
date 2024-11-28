@@ -7,7 +7,41 @@
     <title>Crafty - Handmade Marketplace</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        /* Custom Animations and Styles */
+        
+         .cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .cart-popup {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80%;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        /* Custom Animations and Sty
+        les */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -349,8 +383,36 @@
         </div>
     </div>
 </footer>
-    <!-- Remaining sections (Categories, Products, Footer) remain the same as in the original file -->
+    <!-- Remaining sections (Categories, 
+     Products, Footer) remain the same as in the original file -->
+<div id="cartOverlay" class="cart-overlay">
+    <div class="cart-popup">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Keranjang Belanja</h2>
+            <button id="closeCartBtn" class="text-gray-600 hover:text-gray-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
 
+        <div id="cartItems" class="cart-items">
+            <!-- Cart items will be dynamically added here -->
+        </div>
+
+        <div id="cartSummary" class="mt-4 pt-4 border-t">
+            <div class="flex justify-between">
+                <span class="font-bold">Total:</span>
+                <span id="cartTotal" class="font-bold">Rp 0</span>
+            </div>
+            <button id="checkoutBtn"
+                class="w-full bg-gray-800 text-white px-4 py-2 rounded-full hover:bg-gray-700 mt-4">
+                Checkout
+            </button>
+        </div>
+    </div>
+</div>
     <script>
         // Simple cart functionality
         document.addEventListener('DOMContentLoaded', () => {
@@ -388,6 +450,155 @@
                 });
             });
         });
+         document.addEventListener('DOMContentLoaded', () => {
+                // Ambil elemen tombol keranjang dan tombol "Beli Sekarang"
+                const cartButton = document.querySelector('button[class*="bg-gray-800"]');
+                const buyButtons = document.querySelectorAll('.product-card button');
+
+                // Inisialisasi jumlah item di keranjang dari localStorage
+                let cartCount = parseInt(localStorage.getItem('cartCount') || '0');
+
+                // Fungsi untuk memperbarui tampilan keranjang
+                const updateCartDisplay = () => {
+                    if (cartButton) {
+                        cartButton.textContent = `Keranjang (${cartCount})`;
+                    }
+                    // Simpan jumlah item di localStorage
+                    localStorage.setItem('cartCount', cartCount.toString());
+                };
+
+                // Perbarui tampilan keranjang saat halaman dimuat
+                updateCartDisplay();
+
+                // Tambahkan event listener ke setiap tombol "Beli Sekarang"
+                buyButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        // Tambah jumlah item di keranjang
+                        cartCount++;
+
+                        // Perbarui tampilan keranjang
+                        updateCartDisplay();
+
+                        // Animasi bounce pada tombol keranjang
+                        if (cartButton) {
+                            cartButton.classList.add('animate-bounce');
+                            setTimeout(() => {
+                                cartButton.classList.remove('animate-bounce');
+                            }, 500);
+                        }
+                    });
+                });
+            });
+             document.addEventListener('DOMContentLoaded', () => {
+                    const cartButton = document.querySelector('button:contains("Keranjang")');
+                    const cartOverlay = document.getElementById('cartOverlay');
+                    const closeCartBtn = document.getElementById('closeCartBtn');
+                    const cartItems = document.getElementById('cartItems');
+                    const cartTotal = document.getElementById('cartTotal');
+                    const buyButtons = document.querySelectorAll('button:contains("Beli Sekarang")');
+                    const checkoutBtn = document.getElementById('checkoutBtn');
+
+                    // Cart state
+                    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+                    // Function to update cart display
+                    const updateCartDisplay = () => {
+                        // Update cart button text
+                        if (cartButton) {
+                            cartButton.textContent = `Keranjang (${cart.length})`;
+                        }
+
+                        // Clear existing cart items
+                        cartItems.innerHTML = '';
+
+                        // Calculate total
+                        let total = 0;
+
+                        // Populate cart items
+                        cart.forEach((item, index) => {
+                            total += parseInt(item.price.replace('Rp ', '').replace('.', ''));
+
+                            const cartItemDiv = document.createElement('div');
+                            cartItemDiv.className = 'cart-item';
+                            cartItemDiv.innerHTML = `
+                        <div class="flex items-center">
+                            <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover mr-4 rounded">
+                            <div>
+                                <h3 class="font-bold">${item.name}</h3>
+                                <p class="text-gray-600">${item.price}</p>
+                            </div>
+                        </div>
+                        <button class="remove-item text-red-500" data-index="${index}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    `;
+
+                            cartItems.appendChild(cartItemDiv);
+                        });
+
+                        // Format and update total
+                        cartTotal.textContent = `Rp ${total.toLocaleString()}`;
+
+                        // Add event listeners to remove buttons
+                        document.querySelectorAll('.remove-item').forEach(btn => {
+                            btn.addEventListener('click', (e) => {
+                                const index = e.currentTarget.getAttribute('data-index');
+                                cart.splice(index, 1);
+                                localStorage.setItem('cart', JSON.stringify(cart));
+                                updateCartDisplay();
+                            });
+                        });
+
+                        // Save cart to localStorage
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                    };
+
+                    // Open cart popup
+                    cartButton.addEventListener('click', () => {
+                        cartOverlay.style.display = 'flex';
+                    });
+
+                    // Close cart popup
+                    closeCartBtn.addEventListener('click', () => {
+                        cartOverlay.style.display = 'none';
+                    });
+
+                    // Close cart when clicking outside
+                    cartOverlay.addEventListener('click', (e) => {
+                        if (e.target === cartOverlay) {
+                            cartOverlay.style.display = 'none';
+                        }
+                    });
+
+                    // Add to cart functionality
+                    buyButtons.forEach(button => {
+                        button.addEventListener('click', () => {
+                            const productCard = button.closest('.product-card');
+                            const item = {
+                                name: productCard.querySelector('h4').textContent,
+                                price: productCard.querySelector('span').textContent,
+                                image: productCard.querySelector('img').src
+                            };
+
+                            cart.push(item);
+                            updateCartDisplay();
+
+                            // Show cart popup
+                            cartOverlay.style.display = 'flex';
+                        });
+                    });
+
+                    // Checkout button (placeholder functionality)
+                    checkoutBtn.addEventListener('click', () => {
+                        alert('Checkout functionality to be implemented');
+                    });
+
+                    // Initial cart display update
+                    updateCartDisplay();
+                });
+            
     </script>
 </body>
 
